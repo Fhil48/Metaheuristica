@@ -25,9 +25,8 @@ def fittnes(individuo):
 
 
 def cruza(ch_1, ch_2):
-    int(cut_pto) = random.randint(0, len(ch_1))
-    return ch_1[:cut_pto] + ch_2[cut_pto:] 
-
+    cut_pto = random.randint(0, len(ch_1))
+    return ch_1[:cut_pto] + ch_2[cut_pto:]
 
 
 def mutation(population):
@@ -54,14 +53,15 @@ def ruleta(fitnes, population):
             else:
                 m += prop[i+1]
             print(select)
-        
-        if(len(select) >= 2):
-            if(select[0] == select[1]):
+
+        if (len(select) >= 2):
+            if (select[0] == select[1]):
                 n = random.random()
-                m = prop[0] 
+                m = prop[0]
             else:
                 break
-    return select[0], select[1]     
+    return select[0], select[1]
+
 
 def print_table(individuo):
     n = len(individuo)
@@ -80,12 +80,12 @@ if __name__ == "__main__":
     # print_table(population[9996])
     # print(fittnes(population[9996]))
     ruleta(fitnes, population)
-    
+
     n = 1
     while n <= int(arg[6]):
         if int(arg[4]) < random.random()*100:
             i, j = ruleta(fitnes, population)
             cruza(population[i], population[j])
         if int(arg[5]) < random.random()*100:
-           mutation(population)
+            mutation(population)
         n += 1
