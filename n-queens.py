@@ -50,22 +50,23 @@ def ruleta(fitnes, population):
         prop.append(i/total)
 
     n = random.random()
-    m = prop[0]
+    m = [prop[0]]
     select = []
+    for i in range(1, len(prop)):
+        m.append(prop[i]+m[i-1])
 
     while True:
-        for i in range(0, len(prop)-1):
-            if n <= m and len(select) < 2:
+        n = random.random()
+        for i in range(1, len(prop) - 1):
+            if  prop[i-1] < n and n <= prop[i] and len(select) < 2:
                 select.append(i)
-            else:
-                m += prop[i+1]
-
-        if (len(select) >= 2):
-            if (select[0] == select[1]):
-                n = random.random()
-                m = prop[0]
-            else:
+        if len(select) >= 2:
+            if select[0] != select[1]:
                 break
+            else:
+                select.pop()
+        else: 
+            n = random.random()
     return population[select[0]], population[select[1]]
 
 
@@ -78,6 +79,15 @@ def print_table(individuo):
 
 
 if __name__ == "__main__":
+    """
+    --- input ---
+    valor semilla
+    tamaño tablero
+    tamaño poblacion
+    probabilidad de cruza
+    probabilidad de mutacion
+    numero de iteraciones
+    """
     random.seed(arg[1])
     population = generate_population(int(arg[2]), int(arg[3]))
     fitnes = []
