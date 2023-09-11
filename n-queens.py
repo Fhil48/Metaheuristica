@@ -1,7 +1,7 @@
 import numpy as np
 import random
 from math import ceil, floor
-from sys import argv as arg
+from sys import argv as arg, exit
 
 
 def generate_population(table_size, population_size):
@@ -24,14 +24,26 @@ def fittnes(individuo):
     return colision
 
 
-def cruza(ch_1, ch_2):
-    cut_pto = random.randint(0, len(ch_1))
-    print("Padres: ", ch_1, ch_2)
-    print("Punto:", cut_pto, ", Hijo:", ch_1[:cut_pto] + ch_2[cut_pto:])
-    return ch_1[:cut_pto] + ch_2[cut_pto:]
+def cruza(p_1, p_2):
+    cut_pto = random.randint(0, len(p_1)-1)
+    ch_1 = p_1[:cut_pto] + p_2[cut_pto:]
+    ch_2 = p_1[cut_pto:] + p_2[:cut_pto]
+    print("padres: ", p_1, p_2)
+    print("punto: ", cut_pto)
+    print("hijos: ", ch_1, ch_2)
+    r1 = []
+    r2 = []
+    for i in range(0, len(ch_1)-1):
+        if (ch_1.count(ch_1[i]) > 1):
+            r1.append(i)
+        if (ch_2.count(ch_2[i]) > 1):
+            r2.append(i)
+    print("repetidos: ", r1, r2)
+    return ch_1, ch_2
 
 
 def mutation(population):
+
     individuo = population[random.randint(0, len(population)-1)]
     while True:
         n = random.randint(0, len(individuo)-1)
@@ -45,29 +57,16 @@ def mutation(population):
 
 def ruleta(fitnes, population):
     total = sum(fitnes)
-    prop = []
-    for i in fitnes:
-        prop.append(i/total)
-
-    n = random.random()
-    m = [prop[0]]
-    select = []
-    for i in range(1, len(prop)):
-        m.append(prop[i]+m[i-1])
-
-    while True:
-        n = random.random()
-        for i in range(1, len(prop) - 1):
-            if  prop[i-1] < n and n <= prop[i] and len(select) < 2:
-                select.append(i)
-        if len(select) >= 2:
-            if select[0] != select[1]:
+    selection = []
+    while len(selection) < 2:
+        rand = random.uniform(0, total)
+        prop = 0
+        for i, fit in enumerate(fitnes):
+            prop += fit
+            if (prop >= rand):
+                selection.append(population[i])
                 break
-            else:
-                select.pop()
-        else: 
-            n = random.random()
-    return population[select[0]], population[select[1]]
+    return selection
 
 
 def print_table(individuo):
@@ -78,28 +77,79 @@ def print_table(individuo):
               col else "." for col in range(n)))
 
 
+def parameters():
+    if len(arg) < 7:
+        print("Los parametros de entrada no son correctos.")
+        print("Utilice: n-queens.py <semilla> <tamaño tablero> <tamaño poblacion> <probabilidad de cruza> <probabilidad de mutación> <Iteraciones>")
+        exit(1)
+    try:
+        seed = int(arg[1])
+    except ValueError:
+        print("Los parametros de entrada no son correctos.")
+        exit(1)
+    try:
+        board_size = int(arg[2])
+    except ValueError:
+        print("Los parametros de entrada no son correctos.")
+        exit(1)
+    try:
+        population_size = int(arg[3])
+    except ValueError:
+        print("Los parametros de entrada no son correctos.")
+        exit(1)
+    try:
+        cross_prob = int(arg[4])
+    except ValueError:
+        print("Los parametros de entrada no son correctos.")
+        exit(1)
+    try:
+        mutation_prob = int(arg[5])
+    except ValueError:
+        print("Los parametros de entrada no son correctos.")
+        exit(1)
+    try:
+        iterations = int(arg[6])
+    except ValueError:
+        print("Los parametros de entrada no son correctos.")
+        exit(1)
+    return seed, board_size, population_size, cross_prob, mutation_prob, iterations
+
+
+def Main():
+    seed, board_size, population_size, cross_prob, mutation_prob, iterations = parameters()
+
+    random.seed(seed)
+    population = generate_population(board_size, population_size)
+
+    n = 1
+    while n <= iterations:
+        fitnes = []
+        for i in population:
+            fitnes.append(fittnes(i))
+
+        childrens = []
+
+        while len(population) != len(childrens):
+            if cross_prob > random.random()*100:
+                p_1, p_2 = ruleta(fitnes, population)
+                ch_1, ch_2 = cruza(p_1, p_2)
+                childrens.append(ch_1)
+                childrens.append(ch_2)
+            if mutation_prob > random.random()*100 and len(childrens) > 0:
+                mutation(childrens)
+        population = childrens
+        n += 1
+
+
 if __name__ == "__main__":
+
     """
-    --- input ---
+    --- Argumentos ---
     valor semilla
     tamaño tablero
     tamaño poblacion
     probabilidad de cruza
     probabilidad de mutacion
-    numero de iteraciones
+    numero de iteraciones; iteraciones = generaciones, una generacion es crear tp hijos para reemplazar la poblacion actual
     """
-    random.seed(arg[1])
-    population = generate_population(int(arg[2]), int(arg[3]))
-    fitnes = []
-    for i in population:
-        fitnes.append(fittnes(i))
-    ruleta(fitnes, population)
-
-    n = 1
-    while n <= int(arg[6]):
-        if int(arg[4]) < random.random()*100:
-            p_1, p_2 = ruleta(fitnes, population)
-            cruza(p_1, p_2)
-        if int(arg[5]) < random.random()*100:
-            mutation(population)
-        n += 1
+    Main()
