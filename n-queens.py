@@ -28,22 +28,21 @@ def cruza(p_1, p_2):
     cut_pto = random.randint(0, len(p_1)-1)
     ch_1 = p_1[:cut_pto] + p_2[cut_pto:]
     ch_2 = p_1[cut_pto:] + p_2[:cut_pto]
-    print("padres: ", p_1, p_2)
-    print("punto: ", cut_pto)
-    print("hijos: ", ch_1, ch_2)
     r1 = []
     r2 = []
-    for i in range(0, len(ch_1)-1):
-        if (ch_1.count(ch_1[i]) > 1):
+    for i in range(len(ch_1)):
+        if ch_1.count(i) > 1: 
             r1.append(i)
-        if (ch_2.count(ch_2[i]) > 1):
+        if ch_2.count(i) > 1: 
             r2.append(i)
-    print("repetidos: ", r1, r2)
+    for i in range(len(r1)):
+        bubble = ch_1[ch_1.index(r1[i])]
+        ch_1[ch_1.index(r1[i])] = ch_2[ch_2.index(r2[i])]
+        ch_2[ch_2.index(r2[i])] = bubble
     return ch_1, ch_2
 
 
 def mutation(population):
-
     individuo = population[random.randint(0, len(population)-1)]
     while True:
         n = random.randint(0, len(individuo)-1)
@@ -74,7 +73,7 @@ def print_table(individuo):
     print(individuo, fittnes(individuo))
     for row in range(n):
         print(" ".join("x" if individuo[row] ==
-              col else "." for col in range(n)))
+            col else "." for col in range(n)))
 
 
 def parameters():
@@ -139,6 +138,14 @@ def Main():
                 mutation(childrens)
         population = childrens
         n += 1
+    fitnes = []
+    for i in population:
+        fitnes.append(fittnes(i))
+    population.sort(key=fittnes)
+    print_table(population[0])
+    fitnes.sort()
+    print(fitnes)
+
 
 
 if __name__ == "__main__":
