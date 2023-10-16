@@ -3,9 +3,7 @@ from sys import argv as arg, exit
 import pandas as pd 
 
 
-
-
-def main():
+def parametros():
     if len(arg) == 8:
         entrada = arg[1]
         semilla = int(arg[2])
@@ -14,7 +12,7 @@ def main():
         f_ev = float(arg[5])
         c_h = float(arg[6])
         p_l = float(arg[7])
-        print(entrada, semilla, n_ants, i, f_ev, c_h, p_l)
+        return entrada, semilla, n_ants, i, f_ev, c_h, p_l
     else:
         print("Error en los parametros de entrada")
         print("Los parametros a ingresar son: Archivo de entrada, semilla, numero de hormigas, iteraciones, Factor de evaporacion, coeficiente heuristico, valor probabilidad limite")
@@ -28,5 +26,12 @@ def main():
         exit(0)
 
 
+def main():
+    entrada, semilla, n_ants, i, f_ev, c_h, p_l = parametros()
+    print(entrada, semilla, n_ants, i, f_ev, c_h, p_l)
+
+    file = pd.read_table(entrada, header=None, delim_whitespace=True, skiprows=6, skipfooter=2)
+    file = file.drop(columns=0, axis=1).to_numpy()
+    print(file)
 if __name__ == "__main__":
     main()
