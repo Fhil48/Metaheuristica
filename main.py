@@ -24,14 +24,36 @@ def parametros():
         print("Coeficiente heuristico: 2-5")
         print("Probabilidad limite: 0.9")
         exit(0)
-
+def solucionCalculoCosto(numeroVariables, solucionMejor, matrizDistancias):
+    aux = matrizDistancias[solucionMejor[numeroVariables-1]][solucionMejor[0]]
+    for i in range(numeroVariables-1):
+        aux += matrizDistancias[solucionMejor[i]][solucionMejor[i+1]]
+    return aux
 
 def main():
     entrada, semilla, n_ants, i, f_ev, c_h, p_l = parametros()
     print(entrada, semilla, n_ants, i, f_ev, c_h, p_l)
 
-    file = pd.read_table(entrada, header=None, delim_whitespace=True, skiprows=6, skipfooter=2)
-    file = file.drop(columns=0, axis=1).to_numpy()
-    print(file)
+    # Matriz con coordenadas x,y obtenida del archivo berlin52
+    matrizCoordenadas = pd.read_table(entrada, header=None, delim_whitespace=True, skiprows=6, skipfooter=2)
+    matrizCoordenadas = matrizCoordenadas.drop(columns=0, axis=1).to_numpy()
+    numVariables = matrizCoordenadas.shape[0]
+    print(matrizCoordenadas)
+
+    # matriz de distancia entre cada vertice del grafo que representa la matriz
+    matrizDistancias = np.full((numVariables, numVariables), fill_value = -1.0, dtype = float)
+    for i in range(numVariables-1):
+        for j in range(i+1, numVariables):
+            matrizDistancias[i][j] = np.sqrt(np.sum(np.square(matrizCoordenadas[i]-matrizCoordenadas[j])))
+            matrizDistancias[j][i] = matrizDistancias[i][j]
+    print('Matriz de Distancia:\n', matrizDistancias, '\ntamaño:', matrizDistancias.shape, '\ntipo:', type(matrizDistancias))
+
+    matrizHeuristica = np.full_like(matrizDistancias, fill_value = 1/matrizDistancias, dtype = float)
+    np.fill_diagonal(matrizHeuristica, 0)
+    print('Matriz de Heuristicas:\n', matrizHeuristica, '\ntamaño:', matrizHeuristica.shape, '\ntipo:', type(matrizHeuristica))
+    
+
+
+    
 if __name__ == "__main__":
     main()
