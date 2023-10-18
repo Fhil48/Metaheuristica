@@ -33,7 +33,7 @@ def solucionCalculoCosto(numeroVariables, solucionMejor, matrizDistancias):
 def main():
     entrada, semilla, n_ants, i, f_ev, c_h, p_l = parametros()
     print(entrada, semilla, n_ants, i, f_ev, c_h, p_l)
-
+    np.random.seed(semilla)
     # Matriz con coordenadas x,y obtenida del archivo berlin52
     matrizCoordenadas = pd.read_table(entrada, header=None, delim_whitespace=True, skiprows=6, skipfooter=2)
     matrizCoordenadas = matrizCoordenadas.drop(columns=0, axis=1).to_numpy()
@@ -41,7 +41,7 @@ def main():
     print(matrizCoordenadas)
     
     # mejor solucion
-    solucionMejor = pd.read_table('berlin52.opt.tour.txt', header = None, skiprows=4, skipfooter=2).to_numpy().flatten()
+    solucionMejor = pd.read_table('berlin52.opt.tour.txt', header = None, skiprows = 4, skipfooter = 2).to_numpy().flatten()
     print('Mejor solucion:\n', solucionMejor)
     #  [1, 49, 32, 45, 19, 41, 8, 9, 10, 43, 33, 51, 11, 52, 14, 13, 47, 26, 27, 28, 12, 25, 4, 6, 15, 5, 24, 48, 38, 37, 40, 39, 36, 35, 34, 44, 46, 16, 29, 50, 20, 23, 30, 2, 7, 42, 21, 17, 3, 18, 31, 22]
     # matriz de distancia entre cada vertice del grafo que representa la matriz
@@ -63,10 +63,33 @@ def main():
     # Hormigas
     hormigas = np.empty(n_ants, dtype = object)
     hormigas[:] = [[] for i in range(n_ants)]
-    for i in hormigas:
-        i.append(np.random.randint(numVariables))
-    print('Arreglo hormigas:\n', hormigas[0])
+
+    # Inicializar cada hormiga en un nodo aleatorio
+    nodes = np.arange(numVariables)
+    np.random.shuffle(nodes)
+    print('tamaño:\n')
+    for i in range(len(hormigas)):
+        if(i > len(nodes)-1):
+            j = np.math.floor(np.random.randint(0, len(nodes)-1))
+        else:
+            j = i
+        hormigas[i].append(nodes[j])
+    print('Arreglo hormigas:\n', hormigas)
     
+    for i in range(iteraciones):
+        # for j in hormigas:
+        for a in range(len(hormigas)):
+            if(a > len(nodes)-1):
+                j = np.math.floor(np.random.randint(0, len(nodes)-1))
+            else:
+                j = a
+            hormigas[a].append(nodes[j])
+        for j in hormigas:
+            # Seleccionar proximo segmento
+            # actualizar la feromona en el segmento
+            if(np.random.random() < p_l):
+                
+            else:
     
 if __name__ == "__main__":
     main()
