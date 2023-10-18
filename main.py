@@ -39,7 +39,11 @@ def main():
     matrizCoordenadas = matrizCoordenadas.drop(columns=0, axis=1).to_numpy()
     numVariables = matrizCoordenadas.shape[0]
     print(matrizCoordenadas)
-
+    
+    # mejor solucion
+    solucionMejor = pd.read_table('berlin52.opt.tour.txt', header = None, skiprows=4, skipfooter=2).to_numpy().flatten()
+    print('Mejor solucion:\n', solucionMejor)
+    #  [1, 49, 32, 45, 19, 41, 8, 9, 10, 43, 33, 51, 11, 52, 14, 13, 47, 26, 27, 28, 12, 25, 4, 6, 15, 5, 24, 48, 38, 37, 40, 39, 36, 35, 34, 44, 46, 16, 29, 50, 20, 23, 30, 2, 7, 42, 21, 17, 3, 18, 31, 22]
     # matriz de distancia entre cada vertice del grafo que representa la matriz
     matrizDistancias = np.full((numVariables, numVariables), fill_value = -1.0, dtype = float)
     for i in range(numVariables-1):
@@ -52,8 +56,17 @@ def main():
     np.fill_diagonal(matrizHeuristica, 0)
     print('Matriz de Heuristicas:\n', matrizHeuristica, '\ntamaño:', matrizHeuristica.shape, '\ntipo:', type(matrizHeuristica))
     
+    # Feromonas
+    feromonas = np.full(matrizCoordenadas.shape[0], fill_value = 0.01, dtype = float)
+    print('Arreglo Feromonas:\n', feromonas)
 
-
+    # Hormigas
+    hormigas = np.empty(n_ants, dtype = object)
+    hormigas[:] = [[] for i in range(n_ants)]
+    for i in hormigas:
+        i.append(np.random.randint(numVariables))
+    print('Arreglo hormigas:\n', hormigas[0])
+    
     
 if __name__ == "__main__":
     main()
