@@ -31,8 +31,8 @@ def solucionCalculoCosto(numeroVariables, solucionMejor, matrizDistancias):
     return aux
 
 def main():
-    entrada, semilla, n_ants, i, f_ev, c_h, p_l = parametros()
-    print(entrada, semilla, n_ants, i, f_ev, c_h, p_l)
+    entrada, semilla, n_ants, iteraciones, f_ev, c_h, p_l = parametros()
+    print(entrada, semilla, n_ants, iteraciones, f_ev, c_h, p_l)
     np.random.seed(semilla)
     # Matriz con coordenadas x,y obtenida del archivo berlin52
     matrizCoordenadas = pd.read_table(entrada, header=None, delim_whitespace=True, skiprows=6, skipfooter=2)
@@ -56,40 +56,42 @@ def main():
     np.fill_diagonal(matrizHeuristica, 0)
     print('Matriz de Heuristicas:\n', matrizHeuristica, '\ntamaño:', matrizHeuristica.shape, '\ntipo:', type(matrizHeuristica))
     
-    # Feromonas
-    feromonas = np.full(matrizCoordenadas.shape[0], fill_value = 0.01, dtype = float)
-    print('Arreglo Feromonas:\n', feromonas)
+    # Inicializar Feromonas 
+    matrizFeromonas = np.full((numVariables, numVariables), fill_value = 0.01, dtype = float)
+    np.fill_diagonal(matrizFeromonas, 0)
+    print('Arreglo Feromonas:\n', matrizFeromonas)
 
     # Hormigas
     hormigas = np.empty(n_ants, dtype = object)
     hormigas[:] = [[] for i in range(n_ants)]
 
+    # Ciclo principal
+    i = 0
+    # while i < iteraciones
     # Inicializar cada hormiga en un nodo aleatorio
-    nodes = np.arange(numVariables)
-    np.random.shuffle(nodes)
-    print('tamaño:\n')
-    for i in range(len(hormigas)):
-        if(i > len(nodes)-1):
-            j = np.math.floor(np.random.randint(0, len(nodes)-1))
+    for ant in range(len(hormigas)):
+        if ant < numVariables:
+            hormigas[ant].append(ant)
         else:
-            j = i
-        hormigas[i].append(nodes[j])
-    print('Arreglo hormigas:\n', hormigas)
-    
-    for i in range(iteraciones):
-        # for j in hormigas:
-        for a in range(len(hormigas)):
-            if(a > len(nodes)-1):
-                j = np.math.floor(np.random.randint(0, len(nodes)-1))
-            else:
-                j = a
-            hormigas[a].append(nodes[j])
-        for j in hormigas:
-            # Seleccionar proximo segmento
-            # actualizar la feromona en el segmento
+            hormigas[ant].append(np.random.randint(0, numVariables))
+    for i in range(numVariables):
+        for ant in hormigas:
+            max = -np.inf
+            neighbor = np.array([x for x in range(numVariables) if x not in ant])
+
             if(np.random.random() < p_l):
-                
+                for j in neighbor:
+                    if(matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h > max):
+                        max = matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h 
+                        j0 = j
+                ant.append(j0)
             else:
+                for j in neighbor:
+                    sum = matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h
+                    value = matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h/sum
+    # Ver camino de hormigas        
     
+   
+
 if __name__ == "__main__":
     main()
