@@ -24,6 +24,16 @@ def parametros():
         print("Coeficiente heuristico: 2-5")
         print("Probabilidad limite: 0.9")
         exit(0)
+
+def ruleta(array_prob, neighbor):
+    suma = 0
+    aleatorio = np.random.random()
+
+    for i, prob in enumerate(array_prob):
+        suma += prob
+        if (aleatorio <= suma):
+            return neighbor[i]
+
 def solucionCalculoCosto(numeroVariables, solucionMejor, matrizDistancias):
     aux = matrizDistancias[solucionMejor[numeroVariables-1]][solucionMejor[0]]
     for i in range(numeroVariables-1):
@@ -40,10 +50,7 @@ def main():
     numVariables = matrizCoordenadas.shape[0]
     print(matrizCoordenadas)
     
-    # mejor solucion
-    solucionMejor = pd.read_table('berlin52.opt.tour.txt', header = None, skiprows = 4, skipfooter = 2).to_numpy().flatten()
-    print('Mejor solucion:\n', solucionMejor)
-    #  [1, 49, 32, 45, 19, 41, 8, 9, 10, 43, 33, 51, 11, 52, 14, 13, 47, 26, 27, 28, 12, 25, 4, 6, 15, 5, 24, 48, 38, 37, 40, 39, 36, 35, 34, 44, 46, 16, 29, 50, 20, 23, 30, 2, 7, 42, 21, 17, 3, 18, 31, 22]
+   
     # matriz de distancia entre cada vertice del grafo que representa la matriz
     matrizDistancias = np.full((numVariables, numVariables), fill_value = -1.0, dtype = float)
     for i in range(numVariables-1):
@@ -56,42 +63,92 @@ def main():
     np.fill_diagonal(matrizHeuristica, 0)
     print('Matriz de Heuristicas:\n', matrizHeuristica, '\ntamaño:', matrizHeuristica.shape, '\ntipo:', type(matrizHeuristica))
     
+     # Solucion Optima
+    solucionOptima = pd.read_table('berlin52.opt.tour.txt', header = None, skiprows = 4, skipfooter = 2).to_numpy().flatten()
+    solucionOptima -= 1
+    print('Mejor solucion:\n', np.sort(solucionOptima))
+
+    # Solucion inicial
+    solucionInicial = np.arange(0, numVariables)
+    np.random.shuffle(solucionInicial)
+    costoSolucionInicial = solucionCalculoCosto(numVariables, solucionInicial, matrizDistancias)
+    print('Costo solucion Inicial: ', costoSolucionInicial)
+    #  [1, 49, 32, 45, 19, 41, 8, 9, 10, 43, 33, 51, 11, 52, 14, 13, 47, 26, 27, 28, 12, 25, 4, 6, 15, 5, 24, 48, 38, 37, 40, 39, 36, 35, 34, 44, 46, 16, 29, 50, 20, 23, 30, 2, 7, 42, 21, 17, 3, 18, 31, 22]
     # Inicializar Feromonas 
-    matrizFeromonas = np.full((numVariables, numVariables), fill_value = 0.01, dtype = float)
+    T_ij0 = 1/(numVariables*costoSolucionInicial)
+    matrizFeromonas = np.full((numVariables, numVariables), fill_value = T_ij0, dtype = float)
     np.fill_diagonal(matrizFeromonas, 0)
     print('Arreglo Feromonas:\n', matrizFeromonas)
-
+    
     # Hormigas
     hormigas = np.empty(n_ants, dtype = object)
     hormigas[:] = [[] for i in range(n_ants)]
 
+    costoSolucionActual = costoSolucionInicial        
+    solucionActual = solucionInicial
     # Ciclo principal
-    i = 0
-    # while i < iteraciones
-    # Inicializar cada hormiga en un nodo aleatorio
-    for ant in range(len(hormigas)):
-        if ant < numVariables:
-            hormigas[ant].append(ant)
-        else:
-            hormigas[ant].append(np.random.randint(0, numVariables))
-    for i in range(numVariables):
-        for ant in hormigas:
-            max = -np.inf
-            neighbor = np.array([x for x in range(numVariables) if x not in ant])
-
-            if(np.random.random() < p_l):
-                for j in neighbor:
-                    if(matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h > max):
-                        max = matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h 
-                        j0 = j
-                ant.append(j0)
+    generacion = 0
+    while generacion < iteraciones and not (np.round(costoSolucionActual, decimals=4) == 7544.3659):
+        print('iteracion: ',generacion)
+        # Inicializar cada hormiga en un nodo aleatorio
+        hormigas = np.empty(n_ants, dtype = object)
+        hormigas[:] = [[] for i in range(n_ants)]
+        for ant in range(len(hormigas)):
+            if ant < numVariables:
+                hormigas[ant].append(ant)
             else:
-                for j in neighbor:
-                    sum = matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h
-                    value = matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h/sum
+                hormigas[ant].append(np.random.randint(0, numVariables))
+        
+        # Cada vertice del grafo
+        for i in range(numVariables-1):
+            # Cada hormiga
+            for ant in hormigas:
+                j0 = -np.inf
+                max = -np.inf
+                neighbor = np.array([x for x in range(numVariables) if x not in ant])
+                if(np.random.random() < p_l):
+                    for j in neighbor:
+                        if(matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h > max):
+                            max = matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h 
+                            j0 = j
+                    # ant.append(j0)
+                else:
+                    value = []
+                    suma = 0
+                    for j in neighbor:
+                        prob = matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h
+                        value.append(prob)
+                        suma += prob
+                        
+                    prop = [j / suma for j in value]
+                    j0 = ruleta(prop, neighbor)
+                    # ant.append(j0)
+                # Actualizar feromonas
+                matrizFeromonas[ant[-1]][j0] = (1-f_ev)*matrizFeromonas[ant[-1]][j0]+f_ev*T_ij0
+                ant.append(j0)
+        for ant in hormigas:
+            # print('costo: ', solucionCalculoCosto(numVariables, ant, matrizDistancias))
+            if(costoSolucionActual > solucionCalculoCosto(numVariables, ant, matrizDistancias)):
+                costoSolucionActual = solucionCalculoCosto(numVariables, ant, matrizDistancias)
+                solucionActual = ant
+        for v in range(len(solucionActual) - 1):
+            nodo_actual = solucionActual[v]
+            nodo_siguiente = solucionActual[v+1]
+            matrizFeromonas[nodo_actual][nodo_siguiente] = (1-f_ev)*matrizFeromonas[nodo_actual][nodo_siguiente] + f_ev*(1/costoSolucionActual) 
+
+        # print('iteracion cosots: ', costoSolucionActual)
+        # print('iteracion: ', solucionActual)
+
+        generacion += 1
+    print('mejor Solucion inicial', solucionInicial)
+    print('costo inicial Solucion', costoSolucionInicial)
+    print('mejor Solucion', solucionActual)
+    print('costo mejor Solucion', costoSolucionActual)
+    # Imprimir camino hormigas    
+    # for ant in hormigas:    
+    #     print('hormiga:',np.sort(ant))
     # Ver camino de hormigas        
-    
-   
+
 
 if __name__ == "__main__":
     main()
