@@ -1,7 +1,7 @@
 import numpy as np
 from sys import argv as arg, exit
 import pandas as pd 
-
+import matplotlib.pyplot as plt
 
 def parametros():
     if len(arg) == 8:
@@ -78,7 +78,7 @@ def main():
     T_ij0 = 1/(numVariables*costoSolucionInicial)
     matrizFeromonas = np.full((numVariables, numVariables), fill_value = T_ij0, dtype = float)
     np.fill_diagonal(matrizFeromonas, 0)
-    print('Arreglo Feromonas:\n', matrizFeromonas)
+    print('Matriz de Feromonas:\n', matrizFeromonas, '\ntamaño:', matrizFeromonas.shape, '\ntipo:', type(matrizFeromonas))
     
     # Hormigas
     hormigas = np.empty(n_ants, dtype = object)
@@ -105,13 +105,13 @@ def main():
             for ant in hormigas:
                 j0 = -np.inf
                 max = -np.inf
+                # Seleccion siguiente nodo
                 neighbor = np.array([x for x in range(numVariables) if x not in ant])
                 if(np.random.random() < p_l):
                     for j in neighbor:
                         if(matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h > max):
                             max = matrizFeromonas[ant[-1]][j]*matrizHeuristica[ant[-1]][j]**c_h 
                             j0 = j
-                    # ant.append(j0)
                 else:
                     value = []
                     suma = 0
@@ -122,12 +122,10 @@ def main():
                         
                     prop = [j / suma for j in value]
                     j0 = ruleta(prop, neighbor)
-                    # ant.append(j0)
                 # Actualizar feromonas
                 matrizFeromonas[ant[-1]][j0] = (1-f_ev)*matrizFeromonas[ant[-1]][j0]+f_ev*T_ij0
                 ant.append(j0)
         for ant in hormigas:
-            # print('costo: ', solucionCalculoCosto(numVariables, ant, matrizDistancias))
             if(costoSolucionActual > solucionCalculoCosto(numVariables, ant, matrizDistancias)):
                 costoSolucionActual = solucionCalculoCosto(numVariables, ant, matrizDistancias)
                 solucionActual = ant
@@ -136,19 +134,42 @@ def main():
             nodo_siguiente = solucionActual[v+1]
             matrizFeromonas[nodo_actual][nodo_siguiente] = (1-f_ev)*matrizFeromonas[nodo_actual][nodo_siguiente] + f_ev*(1/costoSolucionActual) 
 
-        # print('iteracion cosots: ', costoSolucionActual)
-        # print('iteracion: ', solucionActual)
-
         generacion += 1
+
     print('mejor Solucion inicial', solucionInicial)
     print('costo inicial Solucion', costoSolucionInicial)
     print('mejor Solucion', solucionActual)
     print('costo mejor Solucion', costoSolucionActual)
+    
     # Imprimir camino hormigas    
-    # for ant in hormigas:    
-    #     print('hormiga:',np.sort(ant))
-    # Ver camino de hormigas        
+    x = [matrizCoordenadas[x][0] for x in solucionActual]
+    y = [matrizCoordenadas[y][1] for y in solucionActual]
+    x.append(matrizCoordenadas[solucionActual[0]][0])
+    y.append(matrizCoordenadas[solucionActual[0]][1])
+    
+    plt.figure(figsize=(8, 6))
 
+    plt.plot(x, y, marker='o', linestyle='-')
+
+    for i, nodo in enumerate(solucionActual):
+        plt.annotate(str(nodo), (x[i], y[i]), textcoords="offset points", xytext=(0,10), ha='right')
+    plt.scatter(x[1:-1], y[1:-1], label="Nodos")
+
+    # Colores para el primer y penúltimo nodo
+    plt.scatter([x[0]], [y[0]], c="green", s=100, edgecolors='green', label="Inicio", facecolors='none')
+    plt.scatter([x[51]], [y[51]], c="red", s=100, edgecolors='red', label="Final", facecolors='none')
+
+    # Agregar flechas dirección nodos
+    for i in range(len(x) - 1):
+        plt.annotate("", xy=(x[i+1], y[i+1]), xytext=(x[i], y[i]), arrowprops=dict(arrowstyle="->", lw=1))
+
+    plt.legend()
+    plt.title("Solución al Problema de Optimización de Colonia de Hormigas")
+    plt.xlabel("Coordenada X")
+    plt.ylabel("Coordenada Y")
+
+    # Mostrar el gráfico
+    plt.show()
 
 if __name__ == "__main__":
     main()
