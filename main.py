@@ -4,4 +4,4 @@ import sys
 import time
 
 if __name__ == '__main__':
-    print(sys.path)
+    print('esta funcionando con los paquetes')
