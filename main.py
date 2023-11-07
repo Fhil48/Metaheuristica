@@ -4,19 +4,25 @@ import sys
 import time
 
 def Parametros():
-    continue
+    pass
 
 def EvaluarEcosistema():
-    continue
+    pass
 
 def Reemplazo():
-    continue
+    pass
 
-def Ruleta():
-    continue
-
+def Ruleta(proporcion):
+    rd = np.random.random(1)
+    print("rd: ", rd)
+    aux = proporcion[0]
+    for i in range(0,len(proporcion)-1):
+        if(aux > rd):
+            return i+1
+        aux += proporcion[i+1]        
+# Arreglar ruleta suma el primer indice cuando no deberia
 def CalcularFitnness():
-    continue
+    pass
 
 def main():
     # Parametros
@@ -24,15 +30,37 @@ def main():
     # - Valor semilla
     # - Iteraciones
     # - Valor de Tao
-
+    entrada, semilla, iteraciones, Tao = 10, 1, 100, 1.4
+    # entrada, semilla, iteraciones, Tao = Parametros(sys.argv)
+    np.random.seed(semilla)
     # Generar numero randomico entre 0 y 1
+    np.random.randint(0,2)
     # Generar numero randomico entre 1 y N
+    np.random.randint(0, entrada+1)
+
     # Inicializar Ecosistema
     #   - Generar una solucion inicial aleatoria
+    X = np.zeros(entrada, dtype=np.int8)
+    # # Aleatoriamente asignar algunos valores a 1
+    for i in range(len(X)):
+        X[i] = np.random.randint(0,2)
+    print(X)
+    # # [1 0 1 1 1 1 0 0 1 1]
+
     #   - mejor solucion = solucion inicial
+    X_best = X
     #   - Generar un arreglo de probabilidad P siguiendo que P_i = i^-tao; para todo 1<= i <= n
+    P = np.zeros(len(X))
+    for i in range(1, len(P)+1):
+        P[i-1] = round(i**(-Tao),2)
+    print('arreglo Probabilidades: ', P)
+    # arreglo Probabilidades:  [1., 0.38, 0.21, 0.14, 0.11, 0.08, 0.07, 0.05, 0.05, 0.04]
     #   - iterar _Iteraciones_: i
     #   - Evaluar y crear un ranking basado en el fitnes de cada valor de X_i del peor a mejor 
+    proporcion = np.array(P/sum(P))
+    print("proporcion: ", proporcion)
+    seleccionado = Ruleta(proporcion)
+    print("seleccionado: ", seleccionado)
     #   - Seleccionar un componente j de X_i basado en la probabilidad del ranking P_i usando ¿RWS?
     #   - x_j = Generar un valor aleatorio que no sea igual a x_j
     #   - Evaluar el nuevo X
@@ -52,7 +80,6 @@ def main():
     #  ¡FALTA!
     # Agregar descripcion de la foto sacada en clases
 
-    print('esta funcionando con los paquetes')
 
 if __name__ == '__main__':
     main()
