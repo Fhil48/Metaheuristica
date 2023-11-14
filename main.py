@@ -4,7 +4,18 @@ import sys
 import time
 
 def Parametros():
-    pass
+    # entrada = sys.argv[1]
+    # semilla = sys.argv[2]
+    # i = sys.argv[3]
+    # T = sys.argv[4]
+    #entrada = sys.argv[1]
+    file_path = './input/knapPI_9_50_1000.csv'
+    semilla = 1
+    file = pd.read_csv(file_path, header=None, skiprows=1, nrows=2, delim_whitespace=True)
+    i = file.iloc[0, 1]
+    c = file.iloc[1, 1]    
+    T = 1.4
+    return file_path, semilla, i, T, c
 
 def EvaluarEcosistema():
     pass
@@ -15,12 +26,13 @@ def Reemplazo():
 def Ruleta(proporcion):
     rd = np.random.random(1)
     print("rd: ", rd)
-    aux = proporcion[0]
+    aux = 0
     for i in range(0,len(proporcion)-1):
-        if(aux > rd):
-            return i+1
-        aux += proporcion[i+1]        
-# Arreglar ruleta suma el primer indice cuando no deberia
+        if(aux + proporcion[i] > rd):
+            print(aux + proporcion[i])
+            return i
+        aux = aux + proporcion[i]        
+
 def CalcularFitnness():
     pass
 
@@ -30,17 +42,28 @@ def main():
     # - Valor semilla
     # - Iteraciones
     # - Valor de Tao
-    entrada, semilla, iteraciones, Tao = 10, 1, 100, 1.4
+    entrada, semilla, iteraciones, Tao, C = Parametros()
+
+    archivo = pd.read_csv(entrada, skiprows=5, header=None, nrows=50)
+
+    peso = np.zeros(50)
+    valor = np.zeros(50)
+    for i, a in archivo.iterrows():
+        peso[i] = a[1]
+        valor[i] = a[2]
+    # print('pesos: ', peso)
+    # print('valores: ', valor)
+    # for i in range(iteraciones):
+    #     print('fitnes de item #', i , ', es: ', peso[i] * valor[i])
+
     # entrada, semilla, iteraciones, Tao = Parametros(sys.argv)
     np.random.seed(semilla)
-    # Generar numero randomico entre 0 y 1
-    np.random.randint(0,2)
     # Generar numero randomico entre 1 y N
-    np.random.randint(0, entrada+1)
-
+    #np.random.randint(0, entrada+1)
+    
     # Inicializar Ecosistema
     #   - Generar una solucion inicial aleatoria
-    X = np.zeros(entrada, dtype=np.int8)
+    X = np.zeros(i, dtype=np.int8)
     # # Aleatoriamente asignar algunos valores a 1
     for i in range(len(X)):
         X[i] = np.random.randint(0,2)
@@ -67,19 +90,8 @@ def main():
     #   - comparar X con el mejor X, e intercambiarlos si es asi
     #   - Devolver el mejor X y el valor de evaluar este X
     #   -------------- 
-    #   - Representacion formal del problema
-    #   - Maximizar 1<= i <= n; v_i * x_i 
-    #   - donde 1<= i <= n; p_i * x_i <= C
-    #   - x_i = {0, 1}
-    #   - v_i = valor monetario del elemento i
-    #   - x_i = variable de desicion, 1 si el elemento se encuentra en la mochila, 0 en otro caso.
-    #   - p_i = el peso del elemento i
-    #   - C = capacidad de peso en la mochila
-
-
-    #  ¡FALTA!
-    # Agregar descripcion de la foto sacada en clases
-
 
 if __name__ == '__main__':
     main()
+
+    
