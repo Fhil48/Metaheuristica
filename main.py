@@ -1,144 +1,133 @@
+import os
+import time
 import numpy as np
 import pandas as pd
-import sys
-import time
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-file_path = './input/knapPI_9_50_1000.csv'
-archivo = pd.read_csv(file_path, skiprows=5, header=None, nrows=50)
-peso = archivo[2].values
-valor = archivo[1].values
-# print(len(archivo))
-# print("pesos: ", peso)
-# print("valores: ",valor)
-def Parametros():
-    # entrada = sys.argv[1]
-    # semilla = sys.argv[2]
-    # i = sys.argv[3]
-    # T = sys.argv[4]
-    #entrada = sys.argv[1]
+def InitializeEcosystem(n, c, items):
     
-    semilla = 1
-    file = pd.read_csv(file_path, header=None, skiprows=1, nrows=2, delim_whitespace=True)
-    i = 1000
-    c = file.iloc[1, 1]    
-    T = 1.5
-    return file_path, semilla, i, T, c
+    x = np.zeros(n, dtype=int)
+    for i in range(n):
+        x[i] = np.random.randint(0,2)
+    best_value = EvaluateEcosystem(x,items)
+    if(np.sum(x*np.array(items)[:,2]) > c):
+        x = np.zeros(n, dtype=int)
+        best_value = -1
+    return x, best_value
 
-def EvaluarEcosistema(X):
-    selected_indices = np.where(X == 1)[0]
-    total_cost = np.sum(valor[selected_indices])
-    total_weight = np.sum(peso[selected_indices])
+def Probabilities(n, Tau):
+    p = np.zeros(n)
+    for i in range(1, n+1):
+        p[i-1] = round(i**(-Tau),2)
+    proportion = np.array(p/sum(p))
+    return proportion
 
-    return total_cost, total_weight
+def Roulette(n, probabilities):
+    return np.random.choice(n, p=probabilities)
 
-def Reemplazo():
-    pass
+def Replacement(solution, probabilities, items, c):
+    x = solution.copy()
+    x_j = Roulette(len(x), probabilities)
+    x[x_j] = 1 - x[x_j]
+    while np.sum(x * items[:, 2]) > c:
+        objetos_incluidos = np.where(x == 1)[0]
 
-def Ruleta(proporcion):
-    rd = np.random.random(1)
-    aux = 0
-    for i in range(0,len(proporcion)-1):
-        if(aux + proporcion[i] > rd):
-            # print(aux + proporcion[i])
-            return i
-        aux = aux + proporcion[i]        
-
-def CalcularFitnness(X):
-    rank = np.zeros(len(X))
-    for i in range(len(X)):
-        rank[i] = peso[i]/valor[i]
+        if len(objetos_incluidos) == 0:
+            break
         
-    indices_ordenados = np.argsort(rank)
-    # print("desordenado: ", indices_ordenados)
-    X = X[indices_ordenados]
-    print("ordenado: ", X)
-    return X
+        objeto_a_quitar = objetos_incluidos[np.argmin(items[objetos_incluidos, 1])]
 
-def algoritmo(tau):
-    # Parametros
-    # - Archivo de entrada
-    # - Valor semilla
-    # - Iteraciones
-    # - Valor de Tao
-    entrada, semilla, iteraciones, Tao, C = Parametros()
+        x[objeto_a_quitar] = 0
+    return x
 
-    # np.random.seed(semilla)
+def Fitness(n, items, solution):
+    fitness = []
+    for i in range(n):
+        fitness.append(solution[i]*items[i][2])
+    return fitness
 
-    # Inicializar Ecosistema
-    #   - Generar una solucion inicial aleatoria
-    X = np.zeros(len(archivo), dtype=np.int8)
-    # # Aleatoriamente asignar algunos valores a 1
-    for i in range(len(X)):
-        X[i] = np.random.randint(0,2)
-    # print(X)
-    # # [1 0 1 1 1 1 0 0 1 1]
+def EvaluateEcosystem(backpack, items):
+    return np.sum(backpack*np.array(items)[:,1])
 
-    #   - mejor solucion = solucion inicial
-    X_best = X.copy()
-    X_best_value, X_best_weight = EvaluarEcosistema(X_best)
-    if(X_best_weight > C):
-        X_best = np.ones(len(archivo))
-        X_best = -X_best
-        X_best_value = -1
-        X_best_weight = np.inf
+def DataBackpack(file_path):
+    backpack = []
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+        for i in range(len(lines)):
+            if(lines[i].split() == []):
+                continue
+            if lines[i].strip().startswith('knapPI'):
+                case = lines[i].strip()
+                items = []
+            elif(lines[i].split()[0] == 'n'):
+                N = int(lines[i].split()[1])
+            elif(lines[i].split()[0] == 'c'):
+                C = int(lines[i].split()[1])
+            elif(lines[i].split()[0] == 'z'):
+                Z = int(lines[i].split()[1])
+            elif(lines[i].split()[0] == 'time'):
+                time = float(lines[i].split()[1])
+            elif(lines[i].split()[0] != '-----'):
+                items.append(list(map(int,lines[i].strip().split(','))))
+            else:
+                backpack.append({
+                    'Backpack': case,
+                    'N': N,
+                    'C': C,
+                    'Z': Z,
+                    'Items': items
+                })
+    return backpack
 
-    #   - Generar un arreglo de probabilidad P siguiendo que P_i = i^-tao; para todo 1<= i <= n
-    P = np.zeros(len(X))
-    for i in range(1, len(P)+1):
-        P[i-1] = round(i**(-tau),2)
-    # print('arreglo Probabilidades: ', P)
-    # arreglo Probabilidades:  [1., 0.38, 0.21, 0.14, 0.11, 0.08, 0.07, 0.05, 0.05, 0.04]
-    #   - iterar _Iteraciones_: i
-    #   - Evaluar y crear un ranking basado en el fitnes de cada valor de X_i del peor a mejor
-    proporcion = np.array(P/sum(P))
-    # print("proporcion: ", proporcion)
-    i = 0
-    while(i < iteraciones):
-        print(i)
-        # print("arreglo: ", X)
-        X = CalcularFitnness(X).copy()
-        
-        seleccionado = Ruleta(proporcion)
-        # print("seleccionado: ", seleccionado)
-        
-        new_value = np.random.randint(0,2)
-        print(X[seleccionado])
-        while(new_value == X[seleccionado]):
-            new_value = np.random.randint(0,2)
-        # print(X[new_value])    
-        if(X[seleccionado] == -1):
-            X[seleccionado] = 1
-        else:
-            X[seleccionado] = 1 - new_value
-        #   - Seleccionar un componente j de X_i basado en la probabilidad del ranking P_i usando ¿RWS?
-        #   - x_j = Generar un valor aleatorio que no sea igual a x_j
-        X_value, X_weight = EvaluarEcosistema(X)
-        if(X_value > X_best_value and X_weight <= C):
-            X_best = X
-            X_best_value = X_value
-            print("valor: ", X_best)
-            return X, X_best_value
-        print("valor: ", X_weight)
-        i += 1
 
 def main():
-    df = pd.DataFrame()
-    taus = np.array([0.8, 1, 1.2, 1.4, 1.6, 1.8])
-    semillas = 30
-    for tau in taus:
-        valores = list()
-        for semilla in range(semillas):
-            np.random.seed(semilla)
-            array, mejor_solucion = algoritmo(tau)
-            print("tau: ", tau, " semilla: ", semilla, " arreglo: ", array, " solucion: ", mejor_solucion)
-            valores.append(mejor_solucion)
+    # archivo_csv_small = 'input/small/knapPI_9_50_1000.csv'
+    # archivo_csv_hard = 'input/hard/knapPI_16_20_1000.csv'
+    archivo_csv_large = 'input/large/knapPI_9_50_100000.csv'
+    Tau = [0.6,0.8,1,1.2,1.4,1.6,1.8,2.0, 2.2, 2.4]
+    iterations = 1000
+    seed = 30
+    data = DataBackpack(archivo_csv_large)
+    d = data[94]
+    results = {}
+    for s in range(seed):
+        np.random.seed(s)
+        for t in Tau:
 
-        df_temp = pd.DataFrame(valores, columns=['Mejor solucion factible'])
-        df_temp['tau'] = tau
-        df = pd.concat([df, df_temp])
+            # for d in data:
+            x_best_solution, x_best_value_solution = InitializeEcosystem(d['N'], d['C'], d['Items'])
+            for i in range(iterations):
+                probabilities = Probabilities(d['N'], t)
+                fitness = Fitness(d['N'],d['Items'],x_best_solution)
+                rank_fitness = np.argsort(fitness)[::-1]
+                d['Items'] = np.array(d['Items'])[rank_fitness]
+                x_best_solution = x_best_solution[rank_fitness]
 
+                x_solution = Replacement(x_best_solution, probabilities, d['Items'], d['C'])
+                x_value_solution = EvaluateEcosystem(x_solution, d['Items'])
+                # print(' valor: ', x_value_solution, 'peso: ',np.sum(x_solution*np.array(d['Items'])[:,2]) ,  np.sum(x_solution*np.array(d['Items'])[:,2]) <= d['C'])
+                if(np.sum(x_solution*np.array(d['Items'])[:,2]) <= d['C'] and x_value_solution > x_best_value_solution):
+                    x_best_solution = x_solution
+                    x_best_value_solution = x_value_solution
+                if(x_best_value_solution == d['Z']):
+                    break
 
-if __name__ == '__main__':  
-    main()
+            results.setdefault(t, []).append(x_best_value_solution)
+                
+            print('solucion para: ', d['Backpack'], ', valor para Tau: ', t, ', valor semilla: ', s, ' nueva solucion final: ', x_best_solution, ' valor final: ', x_best_value_solution, ' valor optimo: ', d['Z'])
+
+    df = pd.Series(results[Tau[0]], name=str(Tau[0])).to_frame()
+    for t in Tau[1:]:
+        arr = results[t]
+        df = df.join(pd.Series(arr, name=str(t)))
 
     
+    sns.boxplot(df)
+    plt.suptitle('Tau vs Z - ' + d['Backpack'])
+    plt.xlabel("Tau")
+    plt.ylabel("Z")
+    plt.show()
+   
+if __name__ == "__main__":
+    main() 
